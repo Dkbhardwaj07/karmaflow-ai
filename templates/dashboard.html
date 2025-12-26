@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>KarmaFlow AI – Marathon Agent</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #e5e7eb;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #38bdf8;
+        }
+
+        .card {
+            background: #020617;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+
+        h2 {
+            color: #38bdf8;
+            margin-bottom: 8px;
+        }
+
+        ul {
+            line-height: 1.6;
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .timeline li {
+            margin-left: 10px;
+        }
+
+        .success {
+            color: #22c55e;
+        }
+
+        .fail {
+            color: #ef4444;
+        }
+
+        .success::before {
+            content: "● ";
+            color: #22c55e;
+        }
+
+        .fail::before {
+            content: "● ";
+            color: #ef4444;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .running {
+            background: #22c55e;
+            color: #020617;
+        }
+
+        .idle {
+            background: #64748b;
+            color: #020617;
+        }
+    </style>
+
+    <!-- AUTO REFRESH SCRIPT -->
+    <script>
+        setInterval(() => {
+            fetch('/api/state')
+                .then(res => res.json())
+                .then(state => {
+
+                    // Goal
+                    document.getElementById('goal').innerText = state.goal || '';
+
+                    // Status
+                    const statusEl = document.getElementById('status');
+                    if (state.current_task) {
+                        statusEl.innerText = 'RUNNING';
+                        statusEl.className = 'badge running';
+                    } else {
+                        statusEl.innerText = 'IDLE';
+                        statusEl.className = 'badge idle';
+                    }
+
+                    // Completed Tasks
+                    document.getElementById('completed').innerHTML =
+                        (state.completed_tasks || []).map(t =>
+                            `<li class="success">Day ${t.day} – ${t.task}</li>`
+                        ).join('');
+
+                    // Failed Tasks
+                    document.getElementById('failed').innerHTML =
+                        (state.failed_tasks || []).map(t =>
+                            `<li class="fail">Day ${t.day} – ${t.task}</li>`
+                        ).join('');
+
+                    // Thought Log (last 5)
+                    document.getElementById('thoughts').innerHTML =
+                        (state.thought_log || []).slice(-5).map(th =>
+                            `<li>${th}</li>`
+                        ).join('');
+                });
+        }, 5000);
+    </script>
+</head>
+
+<body>
+
+<h1>🚀 KarmaFlow AI – Marathon Agent</h1>
+
+<div class="card">
+    <b>Status:</b>
+    <span id="status" class="badge idle">IDLE</span>
+</div>
+
+<div class="card">
+    <h2>🎯 Goal</h2>
+    <p id="goal">{{ state.goal }}</p>
+</div>
+
+<div class="card">
+    <h2>📅 Completed Tasks</h2>
+    <ul id="completed" class="timeline">
+        {% for task in state.completed_tasks %}
+            <li class="success">Day {{ task.day }} – {{ task.task }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="card">
+    <h2>❌ Failed Tasks</h2>
+    <ul id="failed" class="timeline">
+        {% for task in state.failed_tasks %}
+            <li class="fail">Day {{ task.day }} – {{ task.task }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="card">
+    <h2>🧠 Thought Log (latest)</h2>
+    <ul id="thoughts">
+        {% for thought in state.thought_log[-5:] %}
+            <li>{{ thought }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+</body>
+</html>
